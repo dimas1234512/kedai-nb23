@@ -1,9 +1,13 @@
 <div class="max-w-md mx-auto bg-gray-50 min-h-screen pb-32 font-sans relative overflow-hidden" 
-     x-data="orderSystem(
-         {{ $categories->first()->id ?? 0 }}, 
-         {{ $summary['total_items'] ?? 0 }}, 
-         {{ $summary['total_price'] ?? 0 }}
-     )">
+     x-data="{
+         ...orderSystem(
+             {{ $categories->first()->id ?? 0 }}, 
+             {{ $summary['total_items'] ?? 0 }}, 
+             {{ $summary['total_price'] ?? 0 }}
+         ),
+         historyOpen: false,
+         selectedHistory: null
+     }">
     
     <div class="bg-white shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] sticky top-0 z-30 rounded-b-[2rem]">
         <div class="px-6 pt-6 pb-4 flex items-center justify-between">
@@ -18,6 +22,16 @@
                     <p class="text-[10px] font-bold text-gray-400 tracking-widest uppercase mt-0.5">Open Now</p>
                 </div>
             </div>
+
+            @if(count($historyOrders) > 0)
+                <button @click="historyOpen = true" 
+                        class="bg-gray-100 text-gray-700 px-4 py-2 rounded-full hover:bg-yellow-100 hover:text-yellow-800 transition flex items-center gap-2 border border-gray-200 shadow-sm active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-xs font-bold">Riwayat Pesanan</span>
+                </button>
+            @endif
         </div>
 
         <div class="flex overflow-x-auto whitespace-nowrap gap-2 px-6 pb-4 pt-1 scrollbar-hide">
@@ -55,6 +69,7 @@
                                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                     </div>
                                 @endif
+
                                 @if(!$product->is_available)
                                     <div class="absolute inset-0 bg-white/60 flex items-center justify-center backdrop-blur-[1px]">
                                         <span class="bg-gray-800 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Habis</span>
@@ -178,11 +193,154 @@
         </div>
     </div>
 
-    <div class="fixed bottom-6 left-6 right-6 z-40 max-w-md mx-auto animate-bounce-in"
-         x-show="cart.total_items > 0" 
-         x-cloak 
+    <div x-show="historyOpen" 
+         class="fixed inset-0 z-[70] flex items-end justify-center sm:items-center p-0 sm:p-4" 
+         x-data="{ selectedHistory: null }" 
          style="display: none;">
-         
+        
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" @click="historyOpen = false; selectedHistory = null"></div>
+
+        <div class="bg-gray-100 w-full max-w-md h-[85vh] rounded-t-[2rem] sm:rounded-3xl overflow-hidden flex flex-col shadow-2xl relative z-20 transform transition-transform"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="translate-y-full"
+             x-transition:enter-end="translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="translate-y-0"
+             x-transition:leave-end="translate-y-full">
+
+            <div class="px-6 py-5 bg-white shadow-sm z-10 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <button x-show="selectedHistory" @click="selectedHistory = null" class="p-1 rounded-full hover:bg-gray-100 mr-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    
+                    <div>
+                        <h2 class="text-xl font-black text-gray-900" x-text="selectedHistory ? 'Detail Pesanan' : 'Riwayat'"></h2>
+                        <p class="text-xs text-gray-400 font-medium" x-text="selectedHistory ? 'Rincian menu yang dipesan' : 'Daftar pesanan kamu sebelumnya'"></p>
+                    </div>
+                </div>
+                
+                <button @click="historyOpen = false; selectedHistory = null" class="p-2 bg-gray-50 rounded-full hover:bg-gray-100 transition border border-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-5 space-y-4" x-show="!selectedHistory" x-transition:enter="transition ease-out duration-200">
+                @forelse ($historyOrders as $history)
+                    <div @click="selectedHistory = {{ $history->id }}" class="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 relative overflow-hidden cursor-pointer active:scale-95 transition hover:shadow-md">
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5 {{ $history->status == 'paid' ? 'bg-green-500' : ($history->status == 'cancelled' ? 'bg-red-500' : 'bg-yellow-500') }}"></div>
+
+                        <div class="flex justify-between items-start mb-2 pl-3">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-gray-100 p-1"><img src="https://cdn-icons-png.flaticon.com/512/1046/1046784.png" class="w-full h-full object-cover"></div>
+                                    <h3 class="text-sm font-bold text-gray-900">Kedai NB'23</h3>
+                                </div>
+                                <p class="text-[10px] text-gray-400 mt-1 ml-8">{{ $history->created_at->translatedFormat('d M Y, H:i') }}</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </div>
+
+                        <div class="pl-3 flex justify-between items-end mt-4">
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold">Total</p>
+                                <p class="text-sm font-black text-gray-900">Rp {{ number_format($history->total_amount, 0, ',', '.') }}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded-lg text-[10px] font-bold uppercase {{ $history->status == 'paid' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700' }}">
+                                {{ $history->status == 'paid' ? 'Selesai' : 'Proses' }}
+                            </span>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-20 text-gray-400">Belum ada riwayat.</div>
+                @endforelse
+            </div>
+
+            @foreach ($historyOrders as $history)
+                <div class="flex-1 overflow-y-auto p-5 bg-white relative" 
+                     x-show="selectedHistory === {{ $history->id }}" 
+                     style="display: none;"
+                     x-transition:enter="transition ease-out duration-300 translate-x-full"
+                     x-transition:enter-start="translate-x-full"
+                     x-transition:enter-end="translate-x-0">
+                    
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3 {{ $history->status == 'paid' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600' }}">
+                            @if($history->status == 'paid')
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            @endif
+                        </div>
+                        <h3 class="text-lg font-black text-gray-900">{{ $history->status == 'paid' ? 'Pesanan Selesai' : 'Dalam Proses' }}</h3>
+                        <p class="text-xs text-gray-500">ID Order: #{{ $history->id }}</p>
+                        
+                        <div class="mt-3 flex justify-center gap-2">
+                            <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-3 py-1 rounded-full border border-gray-200">
+                                Meja No. {{ $history->table_number }}
+                            </span>
+                            <span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full border border-blue-100">
+                                {{ $history->order_type == 'take_away' ? 'Take Away' : 'Dine In' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 text-center">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Pemesan</p>
+                        <p class="text-sm font-bold text-gray-900">{{ $history->customer_name }}</p>
+                    </div>
+
+                    @if($history->note)
+                        <div class="mb-5 bg-yellow-50 p-3 rounded-xl border border-yellow-100 text-left">
+                            <p class="text-[10px] font-bold text-yellow-600 uppercase tracking-wider mb-1">Catatan:</p>
+                            <p class="text-sm text-gray-800 italic leading-relaxed">"{{ $history->note }}"</p>
+                        </div>
+                    @endif
+
+                    <div class="space-y-4 mb-8">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest border-b pb-2">Rincian Menu</p>
+                        @foreach ($history->items as $item)
+                            <div class="flex justify-between items-start">
+                                <div class="flex gap-3">
+                                    <div class="font-bold text-gray-900 text-sm bg-gray-100 w-6 h-6 flex items-center justify-center rounded">{{ $item->quantity }}x</div>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-800">{{ $item->product->name }}</p>
+                                        @if($item->options)
+                                            <p class="text-[10px] text-gray-500 italic">{{ $item->options }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+                                <p class="text-sm font-bold text-gray-900">Rp {{ number_format($item->unit_price * $item->quantity, 0, ',', '.') }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="border-t pt-4 mt-auto">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-bold text-gray-500">Metode Bayar</span>
+                            <span class="text-sm font-bold text-gray-900 uppercase bg-gray-100 px-2 rounded text-xs">{{ $history->payment_method }}</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-sm font-bold text-gray-500">Total Bayar</span>
+                            <span class="text-xl font-black text-gray-900">Rp {{ number_format($history->total_amount, 0, ',', '.') }}</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <a href="{{ route('success', $history->id) }}" class="py-3 rounded-xl border border-gray-200 text-center text-sm font-bold text-gray-600 hover:bg-gray-50">
+                                Lihat Struk
+                            </a>
+                            <button wire:click="reorder({{ $history->id }})" @click="historyOpen = false" class="py-3 rounded-xl bg-orange-500 text-center text-sm font-bold text-white hover:bg-orange-600 shadow-lg active:scale-95 transition">
+                                Pesan Lagi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
+    <div class="fixed bottom-6 left-6 right-6 z-40 max-w-md mx-auto animate-bounce-in"
+         x-show="cart.total_items > 0" x-cloak style="display: none;">
         <a href="{{ route('checkout') }}" class="bg-gray-900 text-white p-3 pl-5 pr-3 rounded-full shadow-2xl flex items-center justify-between hover:bg-black transition-all active:scale-[0.98] border-2 border-gray-800/50">
             <div class="flex items-center gap-4">
                 <div class="bg-yellow-400 text-black font-black w-8 h-8 flex items-center justify-center rounded-full">
@@ -214,7 +372,6 @@
                 selectedOptions: {},
                 cart: { total_items: initialItems, total_price: initialPrice },
 
-                // --- FUNGSI SINKRONISASI DATA ---
                 init() {
                     Livewire.on('update-cart', (data) => {
                         const payload = data[0]; 
@@ -223,9 +380,7 @@
                     });
                 },
 
-                formatRupiah(angka) {
-                    return new Intl.NumberFormat('id-ID').format(angka);
-                },
+                formatRupiah(angka) { return new Intl.NumberFormat('id-ID').format(angka); },
 
                 openProduct(product) {
                     this.activeProduct = product;
@@ -254,8 +409,6 @@
                     this.cart.total_items += this.qty;
                     this.cart.total_price += addedPrice;
                     this.modalOpen = false;
-                    
-                    // Panggil Server
                     @this.addToCartFromJs(this.activeProduct.id, this.qty, this.selectedOptions);
                 }
             }

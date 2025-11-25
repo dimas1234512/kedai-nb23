@@ -14,7 +14,8 @@
             <p class="text-xs text-gray-400">ID: #{{ $order->id }}</p>
 
             <div class="mt-2 flex justify-center">
-                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase border {{ $order->order_type == 'take_away' ? 'bg-black text-white border-black' : 'bg-gray-100 text-gray-600 border-gray-200' }}">
+                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase border 
+                    {{ $order->order_type == 'take_away' ? 'bg-black text-white border-black' : 'bg-gray-100 text-gray-600 border-gray-200' }}">
                     {{ $order->order_type == 'take_away' ? 'Dibungkus / Take Away' : 'Makan Ditempat' }}
                 </span>
             </div>
@@ -76,7 +77,7 @@
             <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Akses Internet Gratis</p>
             
             <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 relative group overflow-hidden">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 absolute -right-6 -bottom-6 text-gray-200 transform rotate-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 absolute -right-6 -bottom-6 text-gray-200 transform rotate-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
                 </svg>
 
@@ -86,9 +87,10 @@
                         <span class="text-sm font-medium">Wi-Fi Kedai NB</span>
                     </div>
                     
-                    <h2 class="text-2xl font-black text-gray-900 tracking-wider select-all">
+                    <h2 class="text-2xl font-black text-gray-900 tracking-wider select-all cursor-pointer" title="Klik untuk copy">
                         kopienak123
                     </h2>
+                    
                     <p class="text-[10px] text-gray-400 mt-1">Password</p>
                 </div>
             </div>
@@ -101,10 +103,10 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Simpan Struk
+            Simpan Struk / PDF
         </button>
         
-        <a href="{{ route('order') }}" class="block w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-gray-800 transition text-center">
+        <a href="{{ route('order') }}" class="block w-full bg-yellow-400 text-black font-bold py-3 rounded-xl shadow-lg hover:bg-yellow-500 transition text-center">
             Pesan Lagi
         </a>
     </div>

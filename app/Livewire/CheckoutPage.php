@@ -16,11 +16,12 @@ class CheckoutPage extends Component
 
     #[Title('Checkout - Kedai NB 23')]
 
+    // Variabel Data
     public $cart = [];
     public $customer_name;
     public $table_number;
     public $note; 
-    public $order_type = 'dine_in'; // Default Makan Ditempat
+    public $order_type = 'dine_in'; 
     public $payment_method = 'cash';
     public $payment_proof;
 
@@ -28,10 +29,18 @@ class CheckoutPage extends Component
     {
         $this->cart = Session::get('cart', []);
 
+        // Jika keranjang kosong, balik ke menu
         if (count($this->cart) == 0) {
             return redirect()->route('order');
         }
+
+        // Auto Fill Meja jika dari QR
+        if (Session::has('table_number')) {
+            $this->table_number = Session::get('table_number');
+        }
     }
+
+    // --- LOGIKA KERANJANG (+ / - / Hapus) ---
 
     public function increaseQty($key)
     {
@@ -80,13 +89,15 @@ class CheckoutPage extends Component
         return $total;
     }
 
+    // --- PROSES UTAMA: SUBMIT ORDER ---
     public function submitOrder()
     {
+        // 1. Validasi Input
         $rules = [
             'customer_name' => 'required|min:3',
-            'table_number'  => 'required|numeric',
+            'table_number'  => 'required|numeric', // Meja bisa auto atau manual
             'payment_method'=> 'required|in:cash,qris',
-            'order_type'    => 'required|in:dine_in,take_away', // Validasi Tipe
+            'order_type'    => 'required|in:dine_in,take_away',
         ];
 
         if ($this->payment_method === 'qris') {
@@ -95,6 +106,7 @@ class CheckoutPage extends Component
 
         $this->validate($rules);
 
+        // 2. Cek Stok Terakhir (Safety)
         foreach ($this->cart as $cartItem) {
             $product = Product::find($cartItem['product_id']);
             if (!$product || !$product->is_available) {
@@ -103,23 +115,25 @@ class CheckoutPage extends Component
             }
         }
 
+        // 3. Upload Bukti (Jika Ada)
         $proofPath = null;
         if ($this->payment_proof) {
             $proofPath = $this->payment_proof->store('payment_proofs', 'public');
         }
 
-        // Simpan Order dengan Tipe Pesanan
+        // 4. Simpan Order Utama ke Database
         $order = Order::create([
             'customer_name' => $this->customer_name,
             'table_number'  => $this->table_number,
             'payment_method'=> $this->payment_method,
-            'order_type'    => $this->order_type, // Simpan ke DB
+            'order_type'    => $this->order_type,
             'payment_proof' => $proofPath,
             'total_amount'  => $this->getTotalPriceProperty(),
             'status'        => $this->payment_method === 'cash' ? 'pending' : 'waiting_confirmation',
             'note'          => $this->note, 
         ]);
 
+        // 5. Simpan Detail Item ke Database
         foreach ($this->cart as $cartItem) {
             $optionsString = null;
             if (!empty($cartItem['options'])) {
@@ -139,7 +153,14 @@ class CheckoutPage extends Component
             ]);
         }
 
+        // 6. SIMPAN RIWAYAT PESANAN (SESSION) - INI KODE YANG KAMU MINTA
+        $history = Session::get('order_history', []);
+        $history[] = $order->id; // Masukkan ID order baru ke array history
+        Session::put('order_history', $history);
+
+        // 7. Bersihkan Keranjang & Redirect ke Struk
         Session::forget('cart');
+        
         session()->flash('success', 'Pesanan berhasil dibuat! Mohon tunggu.');
         return redirect()->route('success', ['id' => $order->id]);
     }

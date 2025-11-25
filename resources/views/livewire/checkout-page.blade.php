@@ -102,9 +102,32 @@
                         <input type="text" wire:model="customer_name" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-yellow-400" placeholder="Masukkan nama kamu...">
                         @error('customer_name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
-                    <div>
+                   <div>
                         <label class="block text-xs text-gray-500 mb-1">Nomor Meja</label>
-                        <input type="number" wire:model="table_number" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-yellow-400" placeholder="Contoh: 5">
+                        
+                        @if(session()->has('table_number'))
+                            <div class="relative">
+                                <input type="text" 
+                                       wire:model="table_number" 
+                                       class="w-full p-3 border border-gray-200 rounded-xl bg-gray-200 text-gray-600 font-bold cursor-not-allowed focus:outline-none" 
+                                       readonly>
+                                
+                                <div class="absolute inset-y-0 right-0 flex items-center px-3">
+                                    <span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                                        Meja {{ session('table_number') }}
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-1 ml-1">*Nomor meja otomatis dari QR Code</p>
+
+                        @else
+                            <input type="number" 
+                                   wire:model="table_number" 
+                                   class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-yellow-400" 
+                                   placeholder="Contoh: 3">
+                        @endif
+
                         @error('table_number') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
                     <div>
